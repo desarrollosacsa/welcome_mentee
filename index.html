@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentoria Hacker Mode</title>
+
+<style>
+body{
+    margin:0;
+    background:#000;
+    font-family:Consolas,monospace;
+    color:#22c55e;
+    overflow:hidden;
+}
+
+/* ===== MATRIX ===== */
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:0;
+}
+
+/* ===== CENTER ===== */
+.center{
+    position:relative;
+    z-index:2;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* ===== LOGIN ===== */
+.loginBox{
+    background:#020617;
+    padding:30px;
+    border-radius:12px;
+    border:1px solid #064e3b;
+    box-shadow:0 0 40px rgba(34,197,94,.25);
+    width:420px;
+}
+
+input{
+    width:100%;
+    margin-top:10px;
+    background:#000;
+    border:1px solid #064e3b;
+    color:#22c55e;
+    padding:10px;
+    font-family:Consolas;
+}
+
+button{
+    margin-top:15px;
+    width:100%;
+    padding:10px;
+    background:#22c55e;
+    border:none;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.hidden{display:none;}
+
+/* ===== TERMINAL WINDOW ===== */
+.terminalWindow{
+    width:820px;
+    background:#020617;
+    border-radius:12px;
+    border:1px solid #064e3b;
+    box-shadow:0 0 50px rgba(34,197,94,.25);
+    padding:25px;
+}
+
+/* Header estilo ventana */
+.header{
+    display:flex;
+    gap:8px;
+    margin-bottom:15px;
+}
+.dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+}
+.red{background:#ef4444;}
+.yellow{background:#eab308;}
+.green{background:#22c55e;}
+
+#output{
+    white-space:pre-line;
+    min-height:280px;
+    line-height:1.6;
+}
+
+.cursor{
+    display:inline-block;
+    width:10px;
+    height:18px;
+    background:#22c55e;
+    margin-left:4px;
+    animation:blink 1s infinite;
+}
+
+@keyframes blink{
+50%{opacity:0;}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="matrix"></canvas>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="center">
+<div class="loginBox">
+<div>> secure_login.exe</div>
+<input id="user" placeholder="usuario">
+<input id="pass" type="password" placeholder="password">
+<button onclick="login()">ACCESS</button>
+<div id="msg"></div>
+</div>
+</div>
+
+<!-- TERMINAL -->
+<div id="terminalScreen" class="center hidden">
+<div class="terminalWindow">
+
+<div class="header">
+<div class="dot red"></div>
+<div class="dot yellow"></div>
+<div class="dot green"></div>
+</div>
+
+<div id="output"></div>
+
+</div>
+</div>
+
+<script>
+/* ===== MATRIX ===== */
+const canvas=document.getElementById("matrix");
+const ctx=canvas.getContext("2d");
+canvas.height=window.innerHeight;
+canvas.width=window.innerWidth;
+
+const letters="アカサタナハマヤラ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const arr=letters.split("");
+const size=14;
+const cols=canvas.width/size;
+const drops=[];
+for(let i=0;i<cols;i++) drops[i]=1;
+
+function draw(){
+ctx.fillStyle="rgba(0,0,0,0.05)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle="#22c55e";
+ctx.font=size+"px monospace";
+for(let i=0;i<drops.length;i++){
+const text=arr[Math.floor(Math.random()*arr.length)];
+ctx.fillText(text,i*size,drops[i]*size);
+if(drops[i]*size>canvas.height && Math.random()>0.975) drops[i]=0;
+drops[i]++;
+}}
+setInterval(draw,35);
+
+/* ===== LOGIN ===== */
+function login(){
+const u=document.getElementById("user").value;
+const p=document.getElementById("pass").value;
+const msg=document.getElementById("msg");
+
+if(u==="Xochitl" && p==="Xochitl"){
+msg.innerHTML="> ACCESS GRANTED";
+
+setTimeout(()=>{
+document.getElementById("loginScreen").classList.add("hidden");
+document.getElementById("terminalScreen").classList.remove("hidden");
+startCinematic();
+},600);
+
+}else{
+msg.innerHTML="> ACCESS DENIED";
+}
+}
+
+/* ===== SOUND ===== */
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function keySound(){
+const osc=audioCtx.createOscillator();
+const gain=audioCtx.createGain();
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+osc.frequency.value=140;
+gain.gain.value=0.02;
+osc.start();
+osc.stop(audioCtx.currentTime+0.02);
+}
+
+/* ===== TEXTO ===== */
+const cinematic=`C:\\SecureMentoria> access_request.exe
+STATUS: CONNECTING...
+STATUS: VALIDATING USER...
+STATUS: <ACCESS GRANTED>
+
+Inicializando entorno de mentoría...
+
+Hola Xóchitl,
+
+¡Bienvenida! 😄 Soy Jorge Medina de Sistemas y estaré acompañándote como tu mentor.
+Trabajaremos como equipo IT: iterar, aprender y avanzar hasta cumplir tus objetivos.
+
+Cuenta conmigo para soporte, guía y cualquier "debug" que se atraviese en el camino.
+Aquí andamos para ayudarte a lograrlo 🚀
+
+C:\\SecureMentoria> user_loaded: Jorge Medina - Sistemas
+C:\\SecureMentoria> session_active`;
+
+let i=0;
+
+function startCinematic(){
+const output=document.getElementById("output");
+
+function type(){
+if(i<cinematic.length){
+keySound();
+output.innerHTML=cinematic.substring(0,i)+"<span class='cursor'></span>";
+i++;
+setTimeout(type,16);
+}else{
+output.innerHTML=cinematic+"\n\nC:\\SecureMentoria> ready_<span class='cursor'></span>";
+}
+}
+type();
+}
+</script>
+
+</body>
+</html>
